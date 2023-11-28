@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-enum BuildingType {
+public enum BuildingType {
     WOODEN_CABIN(2, 2, 2, Arrays.asList(new Resource(ResourceType.GOLD, 1), new Resource(ResourceType.WOOD, 1)), Arrays.asList(),
             Arrays.asList(new Resource(ResourceType.WOOD, 2), new Resource(ResourceType.FOOD, 2))),
     HOUSE(4, 0, 4, Arrays.asList(new Resource(ResourceType.GOLD, 1), new Resource(ResourceType.WOOD, 2),
@@ -32,30 +32,30 @@ enum BuildingType {
             new Resource(ResourceType.STONE, 50)), Arrays.asList(new Resource(ResourceType.STEEL, 4),
             new Resource(ResourceType.COAL, 4)), Arrays.asList(new Resource(ResourceType.TOOLS, 4)));
 
-    private final int nbResidents;
-    private final int nbWorkers;
+    private final int maxResidents;
+    private final int maxWorkers;
     private final int constructionTime;
     private final List<Resource> constructionCost;
     private final List<Resource> consumption;
     private final List<Resource> production;
 
 
-    BuildingType(int nbResidents, int nbWorkers, int constructionTime, List<Resource> constructionCost, List<Resource> consumption,
+    BuildingType(int maxResidents, int maxWorkers, int constructionTime, List<Resource> constructionCost, List<Resource> consumption,
                  List<Resource> production) {
-        this.nbResidents = nbResidents;
-        this.nbWorkers = nbWorkers;
+        this.maxResidents = maxResidents;
+        this.maxWorkers = maxWorkers;
         this.constructionTime = constructionTime;
         this.production = new ArrayList<>(production);
         this.constructionCost = new ArrayList<>(constructionCost);
         this.consumption = new ArrayList<>(consumption);
     }
 
-    public int getNbResidents() {
-        return nbResidents;
+    public int getMaxResidents() {
+        return maxResidents;
     }
 
-    public int getNbWorkers() {
-        return nbWorkers;
+    public int getMaxWorkers() {
+        return maxWorkers;
     }
 
     public int getConstructionTime() {

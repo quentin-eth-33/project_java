@@ -13,8 +13,8 @@ public class Building {
 
     public Building(BuildingType type) {
         this.type = type;
-        this.currentResidents = type.getNbResidents();
-        this.currentWorkers = type.getNbWorkers();
+        this.currentResidents = type.getMaxResidents();
+        this.currentWorkers = type.getMaxWorkers();
         this.residents = new ArrayList<>();
         initializeResidents();
     }
@@ -49,7 +49,6 @@ public class Building {
         return residents;
     }
 
-    // Méthode pour évoluer le bâtiment
     public void evolveBuilding() {
         System.out.println("Évolution du bâtiment : " + type);
     }
