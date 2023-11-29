@@ -3,6 +3,10 @@ package manager;
 import building.Building;
 import building.BuildingType;
 import resident.Resident;
+import resource.ResourceManager;
+import resource.Resource;
+import resource.ResourceType;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
@@ -11,9 +15,11 @@ import java.util.List;
 
 public class Manager {
     private Map<BuildingType, List<Building>> buildings;
+    private ResourceManager resourceManager;
 
     public Manager() {
         this.buildings = new HashMap<>();
+        this.resourceManager = new ResourceManager();
         initializeBuildings();
     }
 
@@ -21,6 +27,14 @@ public class Manager {
         for (BuildingType buildingType : BuildingType.values()) {
             buildings.put(buildingType, new ArrayList<>());
         }
+    }
+
+    public ResourceManager getResourceManager() {
+        return resourceManager;
+    }
+
+    public void setResourceManager(ResourceManager resourceManager) {
+        this.resourceManager = resourceManager;
     }
 
     public List<Building> getBuildings(BuildingType buildingType) {
@@ -61,16 +75,39 @@ public class Manager {
     public void manageResources() {
         for (List<Building> buildingList : buildings.values()) {
             for (Building building : buildingList) {
-                // Implémentez la logique de consommation et de production des ressources
+                List<Resource> consumption = building.getType().getConsumption();
+                List<Resource> production = building.getType().getProduction();
+
+                for (Resource resource : consumption) {
+                    int consumedQuantity = resource.getQuantity();
+                    resourceManager.getResource(resource.getType())
+                            .setQuantity(resourceManager.getResource(resource.getType()).getQuantity() - consumedQuantity);
+                }
+
+                for (Resource resource : production) {
+                    int producedQuantity = resource.getQuantity();
+                    resourceManager.getResource(resource.getType())
+                            .setQuantity(resourceManager.getResource(resource.getType()).getQuantity() + producedQuantity);
+                }
             }
         }
     }
 
+
     public void manageFoodConsumption() {
         for (List<Building> buildingList : buildings.values()) {
             for (Building building : buildingList) {
-                for (Resident resident : building.getResidents()) {
-                    // Implémentez la logique de consommation de nourriture par les habitants
+                List<Resident> residents = building.getResidents();
+
+                // Consommation de nourriture par les habitants
+                for (Resident resident : residents) {
+                    Resource foodResource = resourceManager.getResource(ResourceType.FOOD);
+                    int foodConsumption = residents.size(); // Chaque habitant consomme une unité de nourriture
+                    if (foodResource.getQuantity() >= foodConsumption) {
+                        foodResource.setQuantity(foodResource.getQuantity() - foodConsumption);
+                    } else {
+                        // Gérer les conséquences de la famine, par exemple, diminuer la population ou le bonheur des habitants
+                    }
                 }
             }
         }

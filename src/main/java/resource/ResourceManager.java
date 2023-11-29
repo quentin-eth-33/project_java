@@ -1,17 +1,25 @@
 package resource;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class ResourceManager {
     private Map<ResourceType, Resource> resources;
+    private List<ResourceObserver> resourceObservers;
 
     public ResourceManager() {
-        this.resources = new HashMap<>();
+        this.resources = new HashMap<>(); // METTRE LES RESSOURCE DE BASE
+        this.resourceObservers = new ArrayList<>();
         initializeResources();
     }
+
     private void initializeResources() {
         for (ResourceType resourceType : ResourceType.values()) {
-            resources.put(resourceType, new Resource(resourceType, 0));
+            Resource resource = new Resource(resourceType, 0);
+            resources.put(resourceType, resource);
+            resource.addObserver(new ResourceChangeObserver());
         }
     }
 
@@ -19,22 +27,17 @@ public class ResourceManager {
         return resources.get(resourceType);
     }
 
-    public void addResource(ResourceType resourceType, int quantity) {
-        Resource resource = resources.get(resourceType);
-        if (resource != null) {
-            resource.setQuantity(resource.getQuantity() + quantity);
-        }
+    public void addResourceObserver(ResourceObserver observer) {
+        resourceObservers.add(observer);
     }
 
-    public void consumeResource(ResourceType resourceType, int quantity) {
-        Resource resource = resources.get(resourceType);
-        if (resource != null) {
-            int newQuantity = resource.getQuantity() - quantity;
-            if (newQuantity >= 0) {
-                resource.setQuantity(newQuantity);
-            } else {
-                System.out.println("Ressource insuffisante : " + resourceType);
-            }
+    public void removeResourceObserver(ResourceObserver observer) {
+        resourceObservers.remove(observer);
+    }
+
+    private void notifyResourceObservers(ResourceType resourceType, int newQuantity) {
+        for (ResourceObserver observer : resourceObservers) {
+            observer.onResourceChanged(resourceType, newQuantity);
         }
     }
 }

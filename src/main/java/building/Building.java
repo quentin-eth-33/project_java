@@ -13,8 +13,8 @@ public class Building {
 
     public Building(BuildingType type) {
         this.type = type;
-        this.currentResidents = type.getMaxResidents();
-        this.currentWorkers = type.getMaxWorkers();
+        this.currentResidents = 0;
+        this.currentWorkers = 0;
         this.residents = new ArrayList<>();
         initializeResidents();
     }
