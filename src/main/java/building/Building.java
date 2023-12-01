@@ -10,12 +10,14 @@ public class Building {
     private int currentResidents;
     private int currentWorkers;
     private List<Resident> residents;
+    private int constructionTimeElapsed;
 
     public Building(BuildingType type) {
         this.type = type;
         this.currentResidents = 0;
         this.currentWorkers = 0;
         this.residents = new ArrayList<>();
+        this.constructionTimeElapsed = 0;  // Initialisation du temps écoulé
         initializeResidents();
     }
 
@@ -23,6 +25,19 @@ public class Building {
         for (int i = 0; i < currentResidents; i++) {
             residents.add(new Resident(this));
         }
+    }
+
+    public boolean isConstructionComplete() {
+        return constructionTimeElapsed >= type.getConstructionTime();
+    }
+
+    public void progressConstructionTime() {
+        if (!isConstructionComplete()) {
+            constructionTimeElapsed++;
+        }
+    }
+    public int getConstructionTimeElapsed() {
+        return constructionTimeElapsed;
     }
 
     public BuildingType getType() {

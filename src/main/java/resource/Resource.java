@@ -24,7 +24,7 @@ public class Resource {
 
     public void setQuantity(int quantity) {
         this.quantity = quantity;
-        notifyObservers();
+        //notifyObservers();
     }
 
     public void addObserver(ResourceObserver observer) {
@@ -37,7 +37,7 @@ public class Resource {
 
     private void notifyObservers() {
         for (ResourceObserver observer : observers) {
-            observer.onResourceChanged(type, quantity);
+            observer.onResourceChanged(type, quantity, 1); // A changer !!!!!!!!!!!!!!!!
         }
     }
 }

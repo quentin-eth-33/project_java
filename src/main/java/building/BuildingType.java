@@ -32,7 +32,7 @@ public enum BuildingType {
             new Resource(ResourceType.STONE, 50)), Arrays.asList(new Resource(ResourceType.STEEL, 4),
             new Resource(ResourceType.COAL, 4)), Arrays.asList(new Resource(ResourceType.TOOLS, 4)));
 
-    private final int maxResidents;
+    private int maxResidents;
     private final int maxWorkers;
     private final int constructionTime;
     private final List<Resource> constructionCost;
@@ -52,6 +52,9 @@ public enum BuildingType {
 
     public int getMaxResidents() {
         return maxResidents;
+    }
+    public void setMaxResidents(int maxResidents) {
+         this.maxResidents = maxResidents;
     }
 
     public int getMaxWorkers() {
