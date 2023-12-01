@@ -1,7 +1,7 @@
 package gameInterface;
 
-import building.Building;
-import building.BuildingType;
+
+import building.*;
 import manager.Manager;
 import resource.ResourceType;
 
@@ -81,8 +81,9 @@ public class UserInterface {
 
         if (choice >= 1 && choice <= BuildingType.values().length) {
             BuildingType selectedBuildingType = BuildingType.values()[choice - 1];
+
             actionPerfomed();
-            gameManager.addBuilding(selectedBuildingType);
+            gameManager.addBuilding(getBuilding(selectedBuildingType));
 
             System.out.println("Bâtiment " + selectedBuildingType.name() + " en construction.");
         } else {
@@ -100,25 +101,27 @@ public class UserInterface {
 
         int buildingChoice = scanner.nextInt();
 
-        System.out.println("Entrez le nombre d'habitants à ajouter lors de l'amélioration :");
-        int numResidents = scanner.nextInt();
 
         if (buildingChoice >= 1 && buildingChoice <= BuildingType.values().length) {
             BuildingType selectedBuildingType = BuildingType.values()[buildingChoice - 1];
             List<Building> buildings = gameManager.getBuildings(selectedBuildingType);
 
+
             // Affiche la liste des bâtiments du type sélectionné
             displayBuildings(buildings);
 
-            System.out.println("Choisissez le bâtiment à améliorer :");
-            int selectedBuildingIndex = scanner.nextInt();
+            System.out.println("Entrez l'ID du bâtiment à améliorer :");
+            int selectedBuildingID = scanner.nextInt();
 
-            if (selectedBuildingIndex >= 1 && selectedBuildingIndex <= buildings.size()) {
-                gameManager.upgradeBuilding(selectedBuildingType, selectedBuildingIndex - 1, numResidents);
-                actionPerfomed();
-            } else {
-                System.out.println("Choix non valide. Veuillez réessayer.");
-            }
+
+                Building building = gameManager.getBuildingById(selectedBuildingID);
+                if(building != null){
+                    gameManager.upgradeBuilding(building);
+                    actionPerfomed();
+                }
+                else {
+                    System.out.println("Batiment non trouvee.");
+                }
         } else {
             System.out.println("Choix non valide. Veuillez réessayer.");
         }
@@ -143,19 +146,20 @@ public class UserInterface {
 
         if (selectedBuildingIndex >= 1 && selectedBuildingIndex <= buildings.size()) {
 
-            System.out.println("Entrez le numéro du batiment "+buildings.get(0).getType().name()+" où ajouter des travailleurs  :");
-            int numBat = scanner.nextInt();
-            if (numBat >= 1 && numBat <= buildings.size()) {
+            System.out.println("Entrez l'ID du batiment "+buildings.get(0).getType().name()+" où ajouter des travailleurs  :");
+            int batID = scanner.nextInt();
+
+            Building building = gameManager.getBuildingById(batID);
+            if(building != null){
                 System.out.println("Entrez le nombre de travailleurs à ajouter :");
                 int numWorkers = scanner.nextInt();
 
-                Building selectedBuilding = buildings.get(numBat - 1);
-                gameManager.addWorkers(selectedBuilding.getType(), numBat - 1, numWorkers);
+                gameManager.addWorkers(building, numWorkers);
                 actionPerfomed();
-            } else {
-                System.out.println("Choix non valide. Veuillez réessayer.");
             }
-
+            else {
+                System.out.println("Batiment non trouvee.");
+            }
         } else {
             System.out.println("Choix non valide. Veuillez réessayer.");
         }
@@ -180,17 +184,19 @@ public class UserInterface {
         displayBuildings(buildings);
 
         if (selectedBuildingIndex >= 1 && selectedBuildingIndex <= buildings.size()) {
-            System.out.println("Entrez le numéro du bâtiment " + buildings.get(0).getType().name() + " où supprimer des travailleurs  :");
-            int numBat = scanner.nextInt();
-            if (numBat >= 1 && numBat <= buildings.size()) {
+
+            System.out.println("Entrez l'ID du bâtiment " + buildings.get(0).getType().name() + " où supprimer des travailleurs  :");
+            int batID = scanner.nextInt();
+
+            Building building = gameManager.getBuildingById(batID);
+            if (building != null) {
                 System.out.println("Entrez le nombre de travailleurs à supprimer :");
                 int numWorkers = scanner.nextInt();
 
-                Building selectedBuilding = buildings.get(numBat - 1);
-                gameManager.removeWorkers(selectedBuilding.getType(), numBat - 1, numWorkers);
+                gameManager.removeWorkers(building, numWorkers);
                 actionPerfomed();
             } else {
-                System.out.println("Choix non valide. Veuillez réessayer.");
+                System.out.println("Bâtiment non trouvé.");
             }
         } else {
             System.out.println("Choix non valide. Veuillez réessayer.");
@@ -198,13 +204,12 @@ public class UserInterface {
     }
 
 
+
     private void displayBuildings(List<Building> buildings) {
-        int index = 1;
         for (Building building : buildings) {
-            System.out.println(index + ". " + building.getType().name() +
-                    " (Habitants : " + building.getCurrentResidents() + "/" + building.getType().getMaxResidents() +
-                    ", Travailleurs : " + building.getCurrentWorkers() + "/" + building.getType().getMaxWorkers() + ")");
-            index++;
+            System.out.println("ID: "+building.getId()+" Type: " + building.getType().name() +
+                    " (Habitants : " + building.getCurrentResidentCapacity() + "/" + building.getMaxResidents() +
+                    ", Travailleurs : " + building.getCurrentWorkerCapacity() + "/" + building.getMaxWorkers() + ")");
         }
     }
 
@@ -216,17 +221,46 @@ public class UserInterface {
                 System.out.println(buildingType.name() + " :");
                 for (Building building : buildings) {
                     if (building.isConstructionComplete()) {
-                        System.out.println("  - " + building.getType().name() +
-                                " (Construit, Habitants : " + building.getCurrentResidents() + "/" + building.getType().getMaxResidents() +
-                                ", Travailleurs : " + building.getCurrentWorkers() + "/" + building.getType().getMaxWorkers() + ")");
+                        System.out.println("  - ID: "+building.getId()+" | " + building.getType().name() +
+                                " (Construit, Habitants : " + building.getCurrentResidentCapacity() + "/" + building.getMaxResidents() +
+                                ", Travailleurs : " + building.getCurrentWorkerCapacity() + "/" + building.getMaxWorkers() + ")");
                     } else {
                         System.out.println("  - " + building.getType().name() +
-                                " (En construction, Temps restant : " + (building.getType().getConstructionTime() - building.getConstructionTimeElapsed()) +
+                                " (En construction, Temps restant : " + (building.getConstructionTime() - building.getConstructionTimeElapsed()) +
                                 " unité(s) de temps)");
                     }
                 }
             }
         }
+    }
+    private Building getBuilding(BuildingType buildingType){
+        BuildingFactory buildingFactory;
+        BuildingFactory building;
+        switch (buildingType) {
+            case WOODEN_CABIN:
+                buildingFactory = new WoodenCabinFactory();
+                break;
+            case HOUSE:
+                buildingFactory = new HouseFactory();
+                break;
+            // Ajoutez d'autres cas pour chaque type de bâtiment
+            case TOOL_FACTORY:
+                buildingFactory = new ToolFactory();
+                break;
+            case STEEL_MILL:
+                buildingFactory = new SteelMillFactory();
+                break;
+            case CEMENT_PLANT:
+                buildingFactory = new CementPlantFactory();
+                break;
+            case LUMBER_MILL:
+                buildingFactory = new LumberMillFactory();
+                break;
+            // Ajoutez d'autres cas au besoin
+            default:
+                throw new IllegalArgumentException("Type de bâtiment non pris en charge");
+        }
+        return buildingFactory.createBuilding();
     }
 
 

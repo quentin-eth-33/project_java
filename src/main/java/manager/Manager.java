@@ -1,8 +1,6 @@
 package manager;
 
-import building.Building;
-import building.BuildingType;
-import resident.Resident;
+import building.*;
 import resource.ResourceManager;
 import resource.Resource;
 import resource.ResourceType;
@@ -32,6 +30,16 @@ public class Manager {
             buildings.put(buildingType, new ArrayList<>());
         }
     }
+    public Building getBuildingById(int buildingId) {
+        for (List<Building> buildingList : buildings.values()) {
+            for (Building building : buildingList) {
+                if (building.getId() == buildingId) {
+                    return building;
+                }
+            }
+        }
+        return null;
+    }
 
     public ResourceManager getResourceManager() {
         return resourceManager;
@@ -46,11 +54,11 @@ public class Manager {
     }
 
 
-    public void addBuilding(BuildingType buildingType) {
-        List<Building> buildingList = buildings.get(buildingType);
+    public void addBuilding(Building building) {
+        List<Building> buildingList = buildings.get(building.getType());
         if (buildingList != null) {
             boolean canBuild = true;
-            for (Resource cost : buildingType.getConstructionCost()) {
+            for (Resource cost : building.getConstructionCost()) {
                 if (resourceManager.getResource(cost.getType()).getQuantity() < cost.getQuantity()) {
                     canBuild = false;
                     System.out.println("Ressources insuffisantes pour construire le bâtiment.");
@@ -59,14 +67,15 @@ public class Manager {
             }
 
             if (canBuild) {
-                for (Resource cost : buildingType.getConstructionCost()) {
+                for (Resource cost : building.getConstructionCost()) {
                     resourceManager.getResource(cost.getType())
                             .setQuantity(resourceManager.getResource(cost.getType()).getQuantity() - cost.getQuantity());
                 }
-                buildingList.add(new Building(buildingType));
+                buildingList.add(building);
             }
         }
     }
+
     public void removeBuilding(BuildingType buildingType, Building building) {
         List<Building> buildingList = buildings.get(buildingType);
         if (buildingList != null) {
@@ -74,64 +83,55 @@ public class Manager {
         }
     }
 
-    public void upgradeBuilding(BuildingType buildingType, int indexBuilding, int numResidents) {
-        List<Building> buildingList = buildings.get(buildingType);
-        if (buildingList != null && !buildingList.isEmpty()) {
-            Building building = buildingList.get(indexBuilding);
-
-            int upgradeCost = numResidents; // Chaque habitant ajouté coûte 1 unité d'or
-            int availableGold = resourceManager.getResource(ResourceType.GOLD).getQuantity();
-
-            if (upgradeCost > availableGold) {
-                System.out.println("Vous n'avez pas assez d'or pour effectuer cette amélioration.");
-                return;
-            }
-
-            // Effectuer l'amélioration
-            building.setCurrentResidents(building.getCurrentResidents() + numResidents);
-            resourceManager.getResource(ResourceType.GOLD).setQuantity(availableGold - upgradeCost);
-
-            System.out.println(numResidents + " habitant(s) ajouté(s) au bâtiment " + buildingType.name() +
-                    ". Coût : " + upgradeCost + " unité(s) d'or.");
+    public void upgradeBuilding(Building building) {
+        int upgradeCost = building.getCurrentResidentCapacity() / 2;
+        for (Resource resource : building.getConstructionCost()) {
+            int cost = resource.getQuantity() / 2;
+            resourceManager.getResource(resource.getType()).setQuantity(
+                    resourceManager.getResource(resource.getType()).getQuantity() - cost
+            );
         }
+
+        int availableGold = resourceManager.getResource(ResourceType.GOLD).getQuantity();
+
+        if (upgradeCost > availableGold) {
+            System.out.println("Vous n'avez pas assez d'or pour effectuer cette amélioration.");
+            return;
+        }
+
+        // Effectuer l'amélioration
+        building.setCurrentWorkerCapacity(building.getCurrentWorkerCapacity() * 2);
+        building.setCurrentResidentCapacity(building.getCurrentResidentCapacity() * 2);
+
+        System.out.println("Le nombre de travailleur et d'habitant du bâtiment " + building.getType() + "a doublée");
     }
 
 
-    public void addWorkers(BuildingType buildingType, int indexBuilding, int numWorkers) {
-        List<Building> buildingList = buildings.get(buildingType);
-        if (buildingList != null && !buildingList.isEmpty()) {
-            Building building = buildingList.get(indexBuilding);
 
-            int availableWorkers = building.getType().getMaxWorkers() - building.getCurrentWorkers();
-            System.out.println("MaxWorker: "+ building.getType().getMaxWorkers()+" | CurrentWorker: "+building.getCurrentWorkers()+" | availableWorkers: "+availableWorkers);
-            if (numWorkers > availableWorkers) {
-                System.out.println("Nombre de travailleurs ajoutés dépasse la limite autorisée.");
-                return;
-            }
-
-            // Ajouter les travailleurs
-            building.setCurrentWorkers(building.getCurrentWorkers() + numWorkers);
-            System.out.println(numWorkers + " travailleursss ajoutés au bâtiment " + buildingType.name() + ".");
+    public void addWorkers(Building building, int numWorkers) {
+        int availableWorkers = building.getMaxWorkers() - building.getCurrentWorkerCapacity();
+        System.out.println("MaxWorker: "+ building.getMaxWorkers()+" | CurrentWorker: "+building.getCurrentWorkerCapacity()+" | availableWorkers: "+availableWorkers);
+        if (numWorkers > availableWorkers) {
+            System.out.println("Nombre de travailleurs ajoutés dépasse la limite autorisée.");
+            return;
         }
+
+        building.setCurrentWorkerCapacity(building.getCurrentWorkerCapacity() + numWorkers);
+        System.out.println(numWorkers + " travailleurs ajoutés au bâtiment " + building.getType() + ".");
     }
 
 
-    public void removeWorkers(BuildingType buildingType, int indexBuilding, int numWorkers) {
-        List<Building> buildingList = buildings.get(buildingType);
-        if (buildingList != null && !buildingList.isEmpty()) {
-            Building building = buildingList.get(indexBuilding);
 
-            int currentWorkers = building.getCurrentWorkers();
 
-            if (numWorkers > currentWorkers) {
-                System.out.println("Nombre de travailleurs à supprimer dépasse le nombre actuel de travailleur.");
-                return;
-            }
-
-            // Supprimer les travailleurs
-            building.setCurrentWorkers(Math.max(0, currentWorkers - numWorkers));
-            System.out.println(numWorkers + " travailleur(s) retiré(s) du bâtiment " + buildingType.name() + ".");
+    public void removeWorkers(Building building, int numWorkers) {
+        int currentWorkers = building.getCurrentWorkerCapacity();
+        if (numWorkers > currentWorkers) {
+            System.out.println("Nombre de travailleurs à supprimer dépasse le nombre actuel de travailleur.");
+            return;
         }
+
+        building.setCurrentWorkerCapacity(Math.max(0, currentWorkers - numWorkers));
+        System.out.println(numWorkers + " travailleur(s) retiré(s) du bâtiment " + building.getType() + ".");
     }
 
     public void construction(){
@@ -146,6 +146,7 @@ public class Manager {
             }
         }
     }
+
     public void manageResources() {
         produceResources();
         consumeResources();
@@ -157,7 +158,7 @@ public class Manager {
         for (List<Building> buildingList : buildings.values()) {
             for (Building building : buildingList) {
                 if(building.isConstructionComplete()){
-                    List<Resource> production = building.getType().getProduction();
+                    List<Resource> production = building.getProduction();
                     for (Resource resource : production) {
                         int producedQuantity = resource.getQuantity();
                         resourceManager.getResource(resource.getType())
@@ -172,7 +173,7 @@ public class Manager {
         for (List<Building> buildingList : buildings.values()) {
             for (Building building : buildingList) {
                 if(building.isConstructionComplete()) {
-                    List<Resource> consumption = building.getType().getConsumption();
+                    List<Resource> consumption = building.getConsumption();
                     for (Resource resource : consumption) {
                         int consumedQuantity = resource.getQuantity();
                         ResourceType resourceType = resource.getType();
@@ -197,7 +198,7 @@ public class Manager {
 
         for (List<Building> buildingList : buildings.values()) {
             for (Building building : buildingList) {
-                totalFoodRequired += building.getCurrentResidents() + building.getCurrentWorkers();
+                totalFoodRequired += building.getCurrentResidentCapacity() + building.getCurrentWorkerCapacity();
             }
         }
 
