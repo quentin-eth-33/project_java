@@ -1,11 +1,14 @@
 package building;
 
+import resident.Resident;
+import resident.Worker;
 import resource.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class Building {
+    private static int maxLevel =3;
     private static int nextId = 1;
     private int id;
     private BuildingType type;  // Utilisez BuildingType au lieu de String
@@ -15,13 +18,15 @@ public class Building {
     private List<Resource> constructionCost;
     private List<Resource> consumption;
     private List<Resource> production;
-    private int currentResidentCapacity;
-    private int currentWorkerCapacity;
+
     private int constructionTimeElapsed;
+    private int currentLevel;
+    private List<Resident> residentList = new ArrayList<>();;
+    private List<Worker> workerList = new ArrayList<>();;
 
 
     public Building(BuildingType type, int maxResidents, int maxWorkers, int constructionTime, List<Resource> constructionCost,
-                    List<Resource> consumption, List<Resource> production, int currentResidentCapacity, int currentWorkerCapacity) {
+                    List<Resource> consumption, List<Resource> production, int nbResident, int nbWorker) {
         this.type = type;
         this.maxResidents = maxResidents;
         this.maxWorkers = maxWorkers;
@@ -29,10 +34,35 @@ public class Building {
         this.production = new ArrayList<>(production);
         this.constructionCost = new ArrayList<>(constructionCost);
         this.consumption = new ArrayList<>(consumption);
-        this.currentResidentCapacity = currentResidentCapacity;
-        this.currentWorkerCapacity = currentWorkerCapacity;
         this.constructionTimeElapsed = 0;
         this.id = nextId++;
+        this.currentLevel = 0;
+        for(int i = 0; i< nbResident; i++){
+            residentList.add(new Resident(this));
+        }
+        for(int i = 0; i< nbWorker; i++){
+            workerList.add(new Worker(this));
+        }
+    }
+
+    public List<Resident> getResidentList(){
+        return this.residentList;
+    }
+
+    public List<Worker> getWorkerList(){
+        return this.workerList;
+    }
+
+    public int getMaxLevel(){
+        return this.maxLevel;
+    }
+
+    public int getCurrentLevel(){
+        return this.currentLevel;
+    }
+
+    public void increaseLevel(){
+        this.currentLevel = currentLevel+1;
     }
 
     public int getId() {
@@ -103,19 +133,4 @@ public class Building {
         this.production = new ArrayList<>(production);
     }
 
-    public int getCurrentResidentCapacity() {
-        return currentResidentCapacity;
-    }
-
-    public void setCurrentResidentCapacity(int currentResidentCapacity) {
-        this.currentResidentCapacity = currentResidentCapacity;
-    }
-
-    public int getCurrentWorkerCapacity() {
-        return currentWorkerCapacity;
-    }
-
-    public void setCurrentWorkerCapacity(int currentWorkerCapacity) {
-        this.currentWorkerCapacity = currentWorkerCapacity;
-    }
 }

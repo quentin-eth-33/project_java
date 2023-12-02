@@ -1,15 +1,16 @@
 package manager;
 
 import building.*;
-import resource.ResourceManager;
+import resident.Resident;
+import resident.Worker;
 import resource.Resource;
+import resource.ResourceManager;
 import resource.ResourceType;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 public class Manager {
@@ -20,7 +21,7 @@ public class Manager {
 
     public Manager() {
         this.buildings = new HashMap<>();
-        this.resourceManager = new ResourceManager();
+        this.resourceManager = ResourceManager.getInstance();
         this.remainingFoodShortage = 0;
         initializeBuildings();
     }
@@ -84,53 +85,113 @@ public class Manager {
     }
 
     public void upgradeBuilding(Building building) {
-        int upgradeCost = building.getCurrentResidentCapacity() / 2;
-        for (Resource resource : building.getConstructionCost()) {
-            int cost = resource.getQuantity() / 2;
-            resourceManager.getResource(resource.getType()).setQuantity(
-                    resourceManager.getResource(resource.getType()).getQuantity() - cost
-            );
+        boolean canUpgrade = true;
+        if(building.getMaxLevel() <=3){
+            for (Resource resource : building.getConstructionCost()) {
+                int cost = resource.getQuantity() / 2;
+                if(resourceManager.getResource(resource.getType()).getQuantity() < cost){
+                    canUpgrade = false;
+                    break;
+                }
+            }
+            if(canUpgrade){
+                for (Resource resource : building.getConstructionCost()) {
+                    int cost = resource.getQuantity() / 2;
+                    resourceManager.getResource(resource.getType()).setQuantity(
+                            resourceManager.getResource(resource.getType()).getQuantity() - cost);
+                }
+
+                building.increaseLevel();
+                building.setMaxWorkers(building.getMaxWorkers() * 2);
+                building.setMaxResidents(building.getMaxResidents() * 2);
+
+                System.out.println("Le nombre de travailleur et d'habitant du bâtiment " + building.getType() + "a doublée");
+            }
+            else{
+                System.out.println("Pas assez d'ouvier pour améliorer Le batiment: "+building.getType()+" | ID: "+building.getId());
+            }
+
         }
-
-        int availableGold = resourceManager.getResource(ResourceType.GOLD).getQuantity();
-
-        if (upgradeCost > availableGold) {
-            System.out.println("Vous n'avez pas assez d'or pour effectuer cette amélioration.");
-            return;
+        else{
+            System.out.println("Le batiment: "+building.getType()+" | ID: "+building.getId()+" est niveau max");
         }
-
-        // Effectuer l'amélioration
-        building.setCurrentWorkerCapacity(building.getCurrentWorkerCapacity() * 2);
-        building.setCurrentResidentCapacity(building.getCurrentResidentCapacity() * 2);
-
-        System.out.println("Le nombre de travailleur et d'habitant du bâtiment " + building.getType() + "a doublée");
     }
 
 
-
-    public void addWorkers(Building building, int numWorkers) {
-        int availableWorkers = building.getMaxWorkers() - building.getCurrentWorkerCapacity();
-        System.out.println("MaxWorker: "+ building.getMaxWorkers()+" | CurrentWorker: "+building.getCurrentWorkerCapacity()+" | availableWorkers: "+availableWorkers);
-        if (numWorkers > availableWorkers) {
-            System.out.println("Nombre de travailleurs ajoutés dépasse la limite autorisée.");
+    public void addResidents(Building building, int numResidents) {
+        int availableResidents = building.getMaxResidents() - building.getResidentList().size();
+        if(numResidents> availableResidents ){
+            System.out.println("Vous n'avez pas assez de place pour ajouter "+numResidents+" habitants");
+            return;
+        }
+        System.out.println("MaxResident: " + building.getMaxResidents() + " | CurrentResident: " + building.getResidentList().size() + " | availableResident: " + availableResidents);
+        int goldCostPeravailableResident = 1;
+        int totalGoldCost = numResidents * goldCostPeravailableResident;
+        if (totalGoldCost > resourceManager.getResource(ResourceType.GOLD).getQuantity()) {
+            System.out.println("Vous n'avez pas assez d'or pour ajouter ces résidents.");
             return;
         }
 
-        building.setCurrentWorkerCapacity(building.getCurrentWorkerCapacity() + numWorkers);
-        System.out.println(numWorkers + " travailleurs ajoutés au bâtiment " + building.getType() + ".");
+        for (int i = 0; i < numResidents; i++) {
+            building.getResidentList().add(new Resident(building));
+        }
+
+        resourceManager.getResource(ResourceType.GOLD).setQuantity(resourceManager.getResource(ResourceType.GOLD).getQuantity() - totalGoldCost);
+
+        System.out.println(numResidents + " Habitant ajoutés au bâtiment " + building.getType() + " | ID: " + building.getId() +
+                ". Coût : " + totalGoldCost + " unité(s) d'or.");
+    }
+
+    public void removeResidents(Building building, int numResidents) {
+        int currentResidents = building.getResidentList().size();
+        if (numResidents > currentResidents) {
+            System.out.println("Nombre de Habitant à supprimer dépasse le nombre actuel de resident.");
+            return;
+        }
+
+        for(int i=0; i<numResidents; i++){
+            building.getResidentList().remove(i);
+        }
+        System.out.println(numResidents + " Habitant(s) retiré(s) du bâtiment " + building.getType() + ".");
+    }
+
+    public void addWorkers(Building building, int numWorkers) {
+        int availableWorkers = building.getMaxWorkers() - building.getWorkerList().size();
+        if(numWorkers> availableWorkers ){
+            System.out.println("Vous n'avez pas assez de place pour ajouter "+numWorkers+ " travailleurs");
+            return;
+        }
+        System.out.println("MaxWorker: " + building.getMaxWorkers() + " | CurrentWorker: " + building.getWorkerList().size() + " | availableWorkers: " + availableWorkers);
+        int goldCostPerWorker = 1;
+        int totalGoldCost = numWorkers * goldCostPerWorker;
+        if (totalGoldCost > resourceManager.getResource(ResourceType.GOLD).getQuantity()) {
+            System.out.println("Vous n'avez pas assez d'or pour ajouter ces travailleurs.");
+            return;
+        }
+
+        for (int i = 0; i < numWorkers; i++) {
+            building.getWorkerList().add(new Worker(building));
+        }
+
+        resourceManager.getResource(ResourceType.GOLD).setQuantity(resourceManager.getResource(ResourceType.GOLD).getQuantity() - totalGoldCost);
+
+        System.out.println(numWorkers + " travailleurs ajoutés au bâtiment " + building.getType() + " | ID: " + building.getId() +
+                ". Coût : " + totalGoldCost + " unité(s) d'or.");
     }
 
 
 
 
     public void removeWorkers(Building building, int numWorkers) {
-        int currentWorkers = building.getCurrentWorkerCapacity();
+        int currentWorkers = building.getWorkerList().size();
         if (numWorkers > currentWorkers) {
             System.out.println("Nombre de travailleurs à supprimer dépasse le nombre actuel de travailleur.");
             return;
         }
 
-        building.setCurrentWorkerCapacity(Math.max(0, currentWorkers - numWorkers));
+        for(int i=0; i<numWorkers; i++){
+            building.getWorkerList().remove(i);
+        }
         System.out.println(numWorkers + " travailleur(s) retiré(s) du bâtiment " + building.getType() + ".");
     }
 
@@ -198,7 +259,7 @@ public class Manager {
 
         for (List<Building> buildingList : buildings.values()) {
             for (Building building : buildingList) {
-                totalFoodRequired += building.getCurrentResidentCapacity() + building.getCurrentWorkerCapacity();
+                totalFoodRequired += building.getResidentList().size() + building.getWorkerList().size();
             }
         }
 
