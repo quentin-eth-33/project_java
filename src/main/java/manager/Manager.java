@@ -19,6 +19,9 @@ public class Manager {
     private int remainingFoodShortage;
     private boolean gameOver = false;
 
+    private static  final Resource residentCost = new Resource(ResourceType.FOOD, 1);
+    private static  final Resource workerCost = new Resource(ResourceType.FOOD, 1);
+
     public Manager() {
         this.buildings = new HashMap<>();
         this.resourceManager = ResourceManager.getInstance();
@@ -60,13 +63,13 @@ public class Manager {
         if (buildingList != null) {
             boolean canBuild = true;
             for (Resource cost : building.getConstructionCost()) {
+
                 if (resourceManager.getResource(cost.getType()).getQuantity() < cost.getQuantity()) {
                     canBuild = false;
                     System.out.println("Ressources insuffisantes pour construire le bâtiment.");
                     break;
                 }
             }
-
             if (canBuild) {
                 for (Resource cost : building.getConstructionCost()) {
                     resourceManager.getResource(cost.getType())
@@ -77,7 +80,8 @@ public class Manager {
         }
     }
 
-    public void removeBuilding(BuildingType buildingType, Building building) {
+    public void removeBuilding(Building building) {
+        BuildingType buildingType = building.getType();
         List<Building> buildingList = buildings.get(buildingType);
         if (buildingList != null) {
             buildingList.remove(building);
@@ -86,9 +90,9 @@ public class Manager {
 
     public void upgradeBuilding(Building building) {
         boolean canUpgrade = true;
-        if(building.getMaxLevel() <=3){
+        if(building.getMaxLevel() <3){
             for (Resource resource : building.getConstructionCost()) {
-                int cost = resource.getQuantity() / 2;
+                int cost = resource.getQuantity() * (building.getCurrentLevel()+1);
                 if(resourceManager.getResource(resource.getType()).getQuantity() < cost){
                     canUpgrade = false;
                     break;
@@ -117,6 +121,10 @@ public class Manager {
         }
     }
 
+    public int getNbBuildingType(){
+        return buildings.keySet().size();
+    }
+
 
     public void addResidents(Building building, int numResidents) {
         int availableResidents = building.getMaxResidents() - building.getResidentList().size();
@@ -125,10 +133,10 @@ public class Manager {
             return;
         }
         System.out.println("MaxResident: " + building.getMaxResidents() + " | CurrentResident: " + building.getResidentList().size() + " | availableResident: " + availableResidents);
-        int goldCostPeravailableResident = 1;
-        int totalGoldCost = numResidents * goldCostPeravailableResident;
-        if (totalGoldCost > resourceManager.getResource(ResourceType.GOLD).getQuantity()) {
-            System.out.println("Vous n'avez pas assez d'or pour ajouter ces résidents.");
+
+        int totalFoodCost = numResidents * residentCost.getQuantity();
+        if (totalFoodCost > resourceManager.getResource(ResourceType.FOOD).getQuantity()) {
+            System.out.println("Vous n'avez pas assez de nourriture pour ajouter ces résidents.");
             return;
         }
 
@@ -136,10 +144,10 @@ public class Manager {
             building.getResidentList().add(new Resident(building));
         }
 
-        resourceManager.getResource(ResourceType.GOLD).setQuantity(resourceManager.getResource(ResourceType.GOLD).getQuantity() - totalGoldCost);
+        resourceManager.getResource(ResourceType.FOOD).setQuantity(resourceManager.getResource(ResourceType.FOOD).getQuantity() - totalFoodCost);
 
-        System.out.println(numResidents + " Habitant ajoutés au bâtiment " + building.getType() + " | ID: " + building.getId() +
-                ". Coût : " + totalGoldCost + " unité(s) d'or.");
+        System.out.println(numResidents + " Habitants ajoutés au bâtiment " + building.getType() + " | ID: " + building.getId() +
+                ". Coût : " + totalFoodCost + " unité(s) de nourriture.");
     }
 
     public void removeResidents(Building building, int numResidents) {
@@ -149,8 +157,8 @@ public class Manager {
             return;
         }
 
-        for(int i=0; i<numResidents; i++){
-            building.getResidentList().remove(i);
+        if (numResidents > 0) {
+            building.getResidentList().subList(0, numResidents).clear();
         }
         System.out.println(numResidents + " Habitant(s) retiré(s) du bâtiment " + building.getType() + ".");
     }
@@ -162,21 +170,20 @@ public class Manager {
             return;
         }
         System.out.println("MaxWorker: " + building.getMaxWorkers() + " | CurrentWorker: " + building.getWorkerList().size() + " | availableWorkers: " + availableWorkers);
-        int goldCostPerWorker = 1;
-        int totalGoldCost = numWorkers * goldCostPerWorker;
-        if (totalGoldCost > resourceManager.getResource(ResourceType.GOLD).getQuantity()) {
-            System.out.println("Vous n'avez pas assez d'or pour ajouter ces travailleurs.");
+        int totalFoodCost = numWorkers * workerCost.getQuantity();
+        if (totalFoodCost > resourceManager.getResource(ResourceType.FOOD).getQuantity()) {
+            System.out.println("Vous n'avez pas assez de nourriture pour ajouter ces travailleurs.");
             return;
         }
 
-        for (int i = 0; i < numWorkers; i++) {
-            building.getWorkerList().add(new Worker(building));
+        if (numWorkers > 0) {
+            building.getWorkerList().subList(0, numWorkers).clear();
         }
 
-        resourceManager.getResource(ResourceType.GOLD).setQuantity(resourceManager.getResource(ResourceType.GOLD).getQuantity() - totalGoldCost);
+        resourceManager.getResource(ResourceType.FOOD).setQuantity(resourceManager.getResource(ResourceType.FOOD).getQuantity() - totalFoodCost);
 
         System.out.println(numWorkers + " travailleurs ajoutés au bâtiment " + building.getType() + " | ID: " + building.getId() +
-                ". Coût : " + totalGoldCost + " unité(s) d'or.");
+                ". Coût : " + totalFoodCost + " unité(s) de nourriture.");
     }
 
 
@@ -259,7 +266,9 @@ public class Manager {
 
         for (List<Building> buildingList : buildings.values()) {
             for (Building building : buildingList) {
-                totalFoodRequired += building.getResidentList().size() + building.getWorkerList().size();
+                if(building.isConstructionComplete()){
+                    totalFoodRequired += building.getResidentList().size() + building.getWorkerList().size();
+                }
             }
         }
 

@@ -36,7 +36,7 @@ public class Building {
         this.consumption = new ArrayList<>(consumption);
         this.constructionTimeElapsed = 0;
         this.id = nextId++;
-        this.currentLevel = 0;
+        this.currentLevel = 1;
         for(int i = 0; i< nbResident; i++){
             residentList.add(new Resident(this));
         }
